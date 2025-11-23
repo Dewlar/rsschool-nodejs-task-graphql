@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import DataLoader from 'dataloader';
+import { getDataLoaders } from '../loaders.js';
 
-// export interface Context {
-//   prisma: PrismaClient;
-//   dataLoaders: DataLoader;
-// }
+export interface Context {
+  prisma: PrismaClient;
+  dataLoaders: ReturnType<typeof getDataLoaders>;
+}
