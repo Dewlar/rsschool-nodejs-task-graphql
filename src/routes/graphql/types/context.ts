@@ -3,5 +3,5 @@ import { getDataLoaders } from '../loaders.js';
 
 export interface Context {
   prisma: PrismaClient;
-  dataLoaders: ReturnType<typeof getDataLoaders>;
+  dataLoader: ReturnType<typeof getDataLoaders>;
 }

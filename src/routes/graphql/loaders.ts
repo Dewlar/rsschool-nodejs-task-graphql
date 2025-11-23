@@ -25,8 +25,8 @@ export const getProfileByUserIdLoader = (prisma: PrismaClient) =>
   });
 
 export const getPostsByAuthorIdLoader = (prisma: PrismaClient) =>
-  new DataLoader(async (userIDs: readonly string[]) => {
-    const posts = await prisma.post.findMany({ where: { authorId: { in: [...userIDs] } } });
+  new DataLoader(async (authorIds: readonly string[]) => {
+    const posts = await prisma.post.findMany({ where: { authorId: { in: [...authorIds] } } });
     const postMap = new Map<string, Static<typeof postSchema>[]>();
 
     posts.forEach((post) => {
@@ -36,7 +36,7 @@ export const getPostsByAuthorIdLoader = (prisma: PrismaClient) =>
         : postMap.set(post.authorId, [post]);
     });
 
-    return userIDs.map((key) => postMap.get(key) ?? null);
+    return authorIds.map((authorId) => postMap.get(authorId) || []);
   });
 
 export const getMemberTypeByIdLoader = (prisma: PrismaClient) =>
@@ -47,29 +47,29 @@ export const getMemberTypeByIdLoader = (prisma: PrismaClient) =>
 
 export const getUserSubscribedToByIdLoader = (prisma: PrismaClient) =>
   new DataLoader(async (userIDs: readonly string[]) => {
-    const usersAuthors = await prisma.user.findMany({
+    const usersWithAuthors = await prisma.user.findMany({
       where: { id: { in: Array.from(userIDs) } },
       include: { userSubscribedTo: { select: { author: true } } },
     });
     const subscribedAuthorsMap = new Map<string, { id: string; name: string }[]>();
 
-    usersAuthors.forEach((user) => {
+    usersWithAuthors.forEach((user) => {
       const subscribedAuthors = user.userSubscribedTo.map((subscription) => subscription.author);
       subscribedAuthorsMap.set(user.id, subscribedAuthors);
     });
 
-    return userIDs.map((id) => subscribedAuthorsMap.get(id));
+    return userIDs.map((id) => subscribedAuthorsMap.get(id) || []);
   });
 
 export const getSubscribedToUserByIdLoader = (prisma: PrismaClient) =>
   new DataLoader(async (userIDs: readonly string[]) => {
-    const usersSubs = await prisma.user.findMany({
+    const usersWithSubs = await prisma.user.findMany({
       where: { id: { in: Array.from(userIDs) } },
       include: { subscribedToUser: { select: { subscriber: true }}}
     });
     const subscribersMap = new Map<string, { id: string; name: string }[]>();
 
-    usersSubs.forEach((user) => {
+    usersWithSubs.forEach((user) => {
       if (!subscribersMap.get(user.id)) {
         subscribersMap.set(user.id, []);
       }
@@ -77,5 +77,5 @@ export const getSubscribedToUserByIdLoader = (prisma: PrismaClient) =>
       subscribersMap.get(user.id)?.push(...user.subscribedToUser.map((sub) => sub.subscriber));
     });
 
-    return userIDs.map((id) => subscribersMap.get(id));
+    return userIDs.map((id) => subscribersMap.get(id) || []);
   });
